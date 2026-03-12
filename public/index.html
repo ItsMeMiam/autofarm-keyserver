@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>AutoFarm v5 — Premium Key</title>
+<style>
+  :root {
+    --bg:    #09090f;
+    --card:  #111120;
+    --bar:   #16162a;
+    --acc:   #a259ff;
+    --acc2:  #5f9fff;
+    --green: #4ade80;
+    --red:   #f87171;
+    --text:  #e2e2f0;
+    --muted: #6b6b9a;
+    --border:#1e1e3a;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  /* ── Header ── */
+  header {
+    width: 100%;
+    padding: 18px 32px;
+    background: var(--bar);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  header .logo {
+    font-size: 20px;
+    font-weight: 800;
+    background: linear-gradient(90deg, var(--acc), var(--acc2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    letter-spacing: -0.5px;
+  }
+  header .badge {
+    background: linear-gradient(90deg, #7c3aed, #3b82f6);
+    color: #fff;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 20px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+  header nav { margin-left: auto; display: flex; gap: 20px; }
+  header nav a { color: var(--muted); text-decoration: none; font-size: 13px; transition: color .2s; }
+  header nav a:hover { color: var(--text); }
+
+  /* ── Hero ── */
+  .hero {
+    margin-top: 64px;
+    text-align: center;
+    padding: 0 20px;
+  }
+  .hero h1 {
+    font-size: clamp(28px, 5vw, 48px);
+    font-weight: 900;
+    letter-spacing: -1px;
+    line-height: 1.15;
+  }
+  .hero h1 span {
+    background: linear-gradient(90deg, var(--acc), var(--acc2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .hero p {
+    color: var(--muted);
+    margin-top: 14px;
+    font-size: 15px;
+    max-width: 480px;
+    margin-inline: auto;
+    line-height: 1.6;
+  }
+
+  /* ── Features grid ── */
+  .features {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 14px;
+    margin-top: 40px;
+    width: 100%;
+    max-width: 780px;
+    padding: 0 20px;
+  }
+  .feat {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px 18px;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  .feat-icon { font-size: 22px; flex-shrink: 0; margin-top: 2px; }
+  .feat-title { font-weight: 700; font-size: 13px; }
+  .feat-desc  { color: var(--muted); font-size: 11px; margin-top: 3px; line-height: 1.5; }
+  .feat.premium { border-color: #4c1d95; background: #0e0a1a; }
+  .feat.premium .feat-title::after {
+    content: " PREMIUM";
+    font-size: 9px;
+    background: linear-gradient(90deg, var(--acc), var(--acc2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    font-weight: 900;
+    letter-spacing: 1px;
+  }
+
+  /* ── Key card ── */
+  .key-card {
+    margin-top: 48px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 32px;
+    width: 100%;
+    max-width: 480px;
+    margin-inline: auto;
+  }
+  .key-card h2 { font-size: 20px; font-weight: 800; margin-bottom: 6px; }
+  .key-card .sub { color: var(--muted); font-size: 13px; margin-bottom: 24px; }
+
+  .steps { display: flex; flex-direction: column; gap: 10px; margin-bottom: 24px; }
+  .step { display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--muted); }
+  .step-num {
+    width: 22px; height: 22px; border-radius: 50%;
+    background: var(--bar); border: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 700; color: var(--acc); flex-shrink: 0;
+  }
+
+  .btn-get {
+    width: 100%;
+    padding: 14px;
+    background: linear-gradient(90deg, #7c3aed, #2563eb);
+    border: none;
+    border-radius: 10px;
+    color: #fff;
+    font-size: 15px;
+    font-weight: 800;
+    cursor: pointer;
+    transition: opacity .2s, transform .1s;
+    letter-spacing: 0.3px;
+  }
+  .btn-get:hover  { opacity: .88; }
+  .btn-get:active { transform: scale(.98); }
+  .btn-get:disabled { opacity: .45; cursor: not-allowed; }
+
+  /* Key display */
+  .key-display {
+    display: none;
+    margin-top: 20px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 16px;
+    position: relative;
+  }
+  .key-display.show { display: block; }
+  .key-label { font-size: 10px; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 6px; }
+  .key-val {
+    font-family: 'Courier New', monospace;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--green);
+    letter-spacing: 1px;
+    word-break: break-all;
+  }
+  .copy-btn {
+    position: absolute; top: 12px; right: 12px;
+    background: var(--bar); border: 1px solid var(--border);
+    color: var(--text); border-radius: 6px; padding: 4px 10px;
+    font-size: 11px; cursor: pointer; transition: background .2s;
+  }
+  .copy-btn:hover { background: var(--border); }
+  .copy-btn.copied { color: var(--green); }
+
+  .expiry-note {
+    margin-top: 10px;
+    font-size: 11px;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .expiry-note::before { content: "⏱"; }
+
+  .error-box {
+    display: none;
+    margin-top: 14px;
+    background: #1a0808;
+    border: 1px solid #4a1010;
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 12px;
+    color: var(--red);
+  }
+  .error-box.show { display: block; }
+
+  /* ── FAQ ── */
+  .faq {
+    width: 100%;
+    max-width: 580px;
+    margin: 48px auto 0;
+    padding: 0 20px;
+  }
+  .faq h3 { font-size: 18px; font-weight: 800; margin-bottom: 16px; }
+  .faq-item { margin-bottom: 14px; }
+  .faq-q { font-weight: 700; font-size: 13px; color: var(--text); margin-bottom: 4px; }
+  .faq-a { color: var(--muted); font-size: 12px; line-height: 1.6; }
+
+  footer {
+    margin-top: 64px;
+    margin-bottom: 24px;
+    color: var(--muted);
+    font-size: 11px;
+    text-align: center;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <span class="logo">AutoFarm v5</span>
+  <span class="badge">Script</span>
+  <nav>
+    <a href="#features">Features</a>
+    <a href="#get-key">Get Key</a>
+  </nav>
+</header>
+
+<section class="hero">
+  <h1>Universal AutoFarm<br><span>Premium Key System</span></h1>
+  <p>Génère ta clé gratuite valable <strong>24h</strong>. Liée à ton PC, non-transférable, à renouveler chaque jour.</p>
+</section>
+
+<section class="features" id="features">
+  <div class="feat">
+    <span class="feat-icon">⚔</span>
+    <div>
+      <div class="feat-title">AutoFarm universel</div>
+      <div class="feat-desc">Orbit, TP mode, hitbox expand, auto-collect</div>
+    </div>
+  </div>
+  <div class="feat">
+    <span class="feat-icon">🎯</span>
+    <div>
+      <div class="feat-title">Whitelist / Blacklist</div>
+      <div class="feat-desc">Cible uniquement les mobs que tu veux</div>
+    </div>
+  </div>
+  <div class="feat">
+    <span class="feat-icon">👁</span>
+    <div>
+      <div class="feat-title">Remote Spy</div>
+      <div class="feat-desc">Détecte et fire les RemoteEvents</div>
+    </div>
+  </div>
+  <div class="feat">
+    <span class="feat-icon">🗺</span>
+    <div>
+      <div class="feat-title">Minimap</div>
+      <div class="feat-desc">Radar temps réel des mobs et joueurs</div>
+    </div>
+  </div>
+  <div class="feat premium">
+    <span class="feat-icon">⚡</span>
+    <div>
+      <div class="feat-title">Fire ALL Remote</div>
+      <div class="feat-desc">ID Blaster — fire tous les remotes avec un arg custom en loop</div>
+    </div>
+  </div>
+  <div class="feat">
+    <span class="feat-icon">♾</span>
+    <div>
+      <div class="feat-title">God / NoClip / InfJump</div>
+      <div class="feat-desc">God mode, no clip, saut infini</div>
+    </div>
+  </div>
+</section>
+
+<section class="key-card" id="get-key" style="margin-top:48px; margin-bottom:0;">
+  <h2>🔑 Obtenir ta clé Premium</h2>
+  <p class="sub">Gratuit — valable 24h — liée à ton HWID</p>
+
+  <div class="steps">
+    <div class="step"><span class="step-num">1</span>Clique sur "Générer ma clé"</div>
+    <div class="step"><span class="step-num">2</span>Copie la clé générée</div>
+    <div class="step"><span class="step-num">3</span>Lance le script et entre ta clé</div>
+    <div class="step"><span class="step-num">4</span>La clé se lie à ton PC — valable 24h</div>
+  </div>
+
+  <button class="btn-get" id="genBtn" onclick="generateKey()">⚡ Générer ma clé</button>
+
+  <div class="key-display" id="keyDisplay">
+    <div class="key-label">Ta clé Premium</div>
+    <div class="key-val" id="keyVal">—</div>
+    <button class="copy-btn" id="copyBtn" onclick="copyKey()">Copier</button>
+    <div class="expiry-note">Clé valable 24h après activation dans le script</div>
+  </div>
+
+  <div class="error-box" id="errorBox"></div>
+</section>
+
+<section class="faq">
+  <h3>FAQ</h3>
+  <div class="faq-item">
+    <div class="faq-q">Pourquoi ma clé expire ?</div>
+    <div class="faq-a">Les clés sont valables 24h à partir du moment où tu les utilises dans le script. Reviens sur ce site chaque jour pour en générer une nouvelle.</div>
+  </div>
+  <div class="faq-item">
+    <div class="faq-q">Puis-je partager ma clé ?</div>
+    <div class="faq-a">Non. La clé se lie à ton HWID (identifiant PC) dès la première utilisation. Si quelqu'un essaie de l'utiliser sur un autre PC, elle sera refusée.</div>
+  </div>
+  <div class="faq-item">
+    <div class="faq-q">C'est vraiment gratuit ?</div>
+    <div class="faq-a">Oui, totalement gratuit. Tu peux générer jusqu'à 3 clés par jour par IP.</div>
+  </div>
+  <div class="faq-item">
+    <div class="faq-q">Quelles features sont Premium ?</div>
+    <div class="faq-a">Le Fire ALL Remote (ID Blaster) nécessite une clé valide. Toutes les autres features sont disponibles sans clé.</div>
+  </div>
+</section>
+
+<footer>AutoFarm v5 — Key System — Non affilié à Roblox Corporation</footer>
+
+<script>
+const API = ""; // vide = même domaine
+
+async function generateKey() {
+  const btn = document.getElementById("genBtn");
+  const display = document.getElementById("keyDisplay");
+  const errorBox = document.getElementById("errorBox");
+  btn.disabled = true;
+  btn.textContent = "Génération...";
+  errorBox.classList.remove("show");
+  display.classList.remove("show");
+
+  try {
+    const res = await fetch(API + "/api/generate", { method: "POST" });
+    const data = await res.json();
+    if (data.success) {
+      document.getElementById("keyVal").textContent = data.key;
+      display.classList.add("show");
+      btn.textContent = "⚡ Générer une nouvelle clé";
+    } else {
+      errorBox.textContent = "❌ " + data.error;
+      errorBox.classList.add("show");
+      btn.textContent = "⚡ Générer ma clé";
+    }
+  } catch (e) {
+    errorBox.textContent = "❌ Erreur serveur — réessaie dans quelques secondes.";
+    errorBox.classList.add("show");
+    btn.textContent = "⚡ Générer ma clé";
+  }
+  btn.disabled = false;
+}
+
+function copyKey() {
+  const val = document.getElementById("keyVal").textContent;
+  navigator.clipboard.writeText(val).then(() => {
+    const btn = document.getElementById("copyBtn");
+    btn.textContent = "✓ Copié !";
+    btn.classList.add("copied");
+    setTimeout(() => { btn.textContent = "Copier"; btn.classList.remove("copied"); }, 2000);
+  });
+}
+</script>
+</body>
+</html>
