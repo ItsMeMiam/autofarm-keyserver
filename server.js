@@ -15,9 +15,10 @@ const db   = new Database("keys.db");
 const PORT = process.env.PORT || 3000;
 
 // ── Config ──────────────────────────────────
-const ADMIN_SECRET  = process.env.ADMIN_SECRET  || "change_this_admin_password";
-const KEY_DURATION  = 24 * 60 * 60 * 1000; // 24h en ms
-const MAX_KEYS_IP   = 3;  // max générations par IP par jour
+const ADMIN_SECRET     = process.env.ADMIN_SECRET     || "change_this_admin_password";
+const WORKINK_API_KEY  = process.env.WORKINK_API_KEY  || "your_workink_api_key_here";
+const KEY_DURATION     = 24 * 60 * 60 * 1000; // 24h in ms
+const MAX_KEYS_IP      = 1;  // 1 key per IP per day
 
 // ── DB init ──────────────────────────────────
 db.exec(`
@@ -37,6 +38,10 @@ db.exec(`
     count INTEGER DEFAULT 0,
     PRIMARY KEY (ip, date)
   );
+  CREATE TABLE IF NOT EXISTS used_tokens (
+    token      TEXT    NOT NULL PRIMARY KEY,
+    used_at    INTEGER NOT NULL
+  );
 `);
 
 // ── Middleware ──────────────────────────────
@@ -46,7 +51,7 @@ app.use(express.static(path.join(__dirname, "public")));
 
 // ── Helpers ─────────────────────────────────
 function genKey() {
-  // Format : AFv5-XXXX-XXXX-XXXX-XXXX
+  // Format: AFv5-XXXX-XXXX-XXXX-XXXX
   const seg = () => crypto.randomBytes(2).toString("hex").toUpperCase();
   return `AFv5-${seg()}-${seg()}-${seg()}-${seg()}`;
 }
@@ -59,18 +64,55 @@ function todayStr() {
   return new Date().toISOString().slice(0, 10);
 }
 
+// ── Workink token verification ───────────────
+async function verifyWorkinkToken(token) {
+  try {
+    const url = `https://api.workink.net/v1/verify?apikey=${WORKINK_API_KEY}&token=${encodeURIComponent(token)}`;
+    const res  = await fetch(url);
+    const data = await res.json();
+    // Workink returns { success: true } on valid token
+    return data.success === true;
+  } catch (e) {
+    console.error("[Workink] Verification failed:", e.message);
+    return false;
+  }
+}
+
 // ── Routes ──────────────────────────────────
 
-// GET /api/generate — génère une clé (rate-limited par IP)
-app.post("/api/generate", (req, res) => {
-  const ip   = getClientIp(req);
-  const today = todayStr();
+// POST /api/generate — verify Workink token + generate key (1/IP/day)
+app.post("/api/generate", async (req, res) => {
+  const { token } = req.body;
+  const ip        = getClientIp(req);
+  const today     = todayStr();
 
-  // Rate limit
-  const row = db.prepare("SELECT count FROM ip_ratelimit WHERE ip=? AND date=?").get(ip, today);
+  if (!token) {
+    return res.status(400).json({ success: false, error: "Missing Workink token. Please complete the verification." });
+  }
+
+  // Check token already used (replay attack prevention)
+  const usedToken = db.prepare("SELECT token FROM used_tokens WHERE token=?").get(token);
+  if (usedToken) {
+    return res.status(400).json({ success: false, error: "This verification token has already been used." });
+  }
+
+  // Verify Workink token
+  const valid = await verifyWorkinkToken(token);
+  if (!valid) {
+    return res.status(403).json({ success: false, error: "Workink verification failed. Please complete the full verification." });
+  }
+
+  // Mark token as used immediately (prevents concurrent requests with same token)
+  db.prepare("INSERT OR IGNORE INTO used_tokens (token, used_at) VALUES (?,?)").run(token, Date.now());
+
+  // Rate limit: 1 key per IP per day
+  const row   = db.prepare("SELECT count FROM ip_ratelimit WHERE ip=? AND date=?").get(ip, today);
   const count = row ? row.count : 0;
   if (count >= MAX_KEYS_IP) {
-    return res.status(429).json({ success: false, error: "Limite de génération atteinte pour aujourd'hui (3/jour)." });
+    return res.status(429).json({
+      success: false,
+      error: "You have already generated a key today. Keys reset every 24 hours — come back tomorrow."
+    });
   }
 
   const key = genKey();
@@ -85,53 +127,59 @@ app.post("/api/generate", (req, res) => {
   res.json({ success: true, key });
 });
 
-// POST /api/verify — vérifie clé + HWID depuis le script Lua
+// POST /api/verify — verify key + HWID from the Lua script
 app.post("/api/verify", (req, res) => {
   const { key, hwid } = req.body;
-  if (!key || !hwid) return res.status(400).json({ success: false, error: "Paramètres manquants." });
+  if (!key || !hwid) return res.status(400).json({ success: false, error: "Missing parameters." });
 
   const row = db.prepare("SELECT * FROM keys WHERE key=?").get(key);
-  if (!row) return res.json({ success: false, error: "Clé invalide." });
+  if (!row) return res.json({ success: false, error: "Invalid key." });
 
   const now = Date.now();
 
-  // Première utilisation : bind HWID + démarrer expiration 24h
+  // First use: bind HWID + start 24h expiry
   if (!row.hwid) {
     db.prepare("UPDATE keys SET hwid=?, bound_at=?, expires_at=?, used=1 WHERE key=?")
       .run(hwid, now, now + KEY_DURATION, key);
-    return res.json({ success: true, message: "Clé activée !", expires_in: KEY_DURATION });
+    return res.json({ success: true, message: "Key activated!", expires_in: KEY_DURATION });
   }
 
-  // HWID différent = tentative de partage
+  // Different HWID = sharing attempt
   if (row.hwid !== hwid) {
-    return res.json({ success: false, error: "Cette clé est liée à un autre PC." });
+    return res.json({ success: false, error: "This key is bound to a different PC." });
   }
 
-  // Expirée
+  // Expired
   if (now > row.expires_at) {
     db.prepare("UPDATE keys SET hwid=NULL, bound_at=NULL, expires_at=NULL, used=0 WHERE key=?").run(key);
-    return res.json({ success: false, error: "Clé expirée. Génère-en une nouvelle sur le site." });
+    return res.json({ success: false, error: "Key expired. Generate a new one on the website." });
   }
 
   const remaining = row.expires_at - now;
-  res.json({ success: true, message: "Premium actif !", expires_in: remaining });
+  res.json({ success: true, message: "Premium active!", expires_in: remaining });
 });
 
-// POST /api/admin/revoke — révoque une clé (admin)
+// POST /api/admin/revoke — revoke a key (admin)
 app.post("/api/admin/revoke", (req, res) => {
   const { secret, key } = req.body;
-  if (secret !== ADMIN_SECRET) return res.status(403).json({ success: false, error: "Non autorisé." });
+  if (secret !== ADMIN_SECRET) return res.status(403).json({ success: false, error: "Unauthorized." });
   db.prepare("DELETE FROM keys WHERE key=?").run(key);
-  res.json({ success: true, message: "Clé révoquée." });
+  res.json({ success: true, message: "Key revoked." });
 });
 
-// GET /api/admin/keys — liste toutes les clés (admin)
+// GET /api/admin/keys — list all keys (admin)
 app.get("/api/admin/keys", (req, res) => {
   const { secret } = req.query;
-  if (secret !== ADMIN_SECRET) return res.status(403).json({ success: false, error: "Non autorisé." });
+  if (secret !== ADMIN_SECRET) return res.status(403).json({ success: false, error: "Unauthorized." });
   const keys = db.prepare("SELECT * FROM keys ORDER BY created_at DESC LIMIT 100").all();
   res.json({ success: true, keys });
 });
+
+// Cleanup old tokens every hour (keep DB small)
+setInterval(() => {
+  const cutoff = Date.now() - 48 * 60 * 60 * 1000; // 48h
+  db.prepare("DELETE FROM used_tokens WHERE used_at < ?").run(cutoff);
+}, 60 * 60 * 1000);
 
 // Fallback → site
 app.get("*", (req, res) => {
