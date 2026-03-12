@@ -4,7 +4,7 @@
   "description": "AutoFarm v5 Premium Key System",
   "main": "api/server.js",
   "scripts": {
-    "start": "node api/server.js",
+    "start": "node server.js",
     "dev": "nodemon api/server.js"
   },
   "dependencies": {
