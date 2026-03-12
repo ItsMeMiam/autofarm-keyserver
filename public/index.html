@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="en">
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
@@ -154,10 +154,14 @@
     cursor: pointer;
     transition: opacity .2s, transform .1s;
     letter-spacing: 0.3px;
+    text-decoration: none;
+    display: block;
+    text-align: center;
+    line-height: 1;
   }
   .btn-get:hover  { opacity: .88; }
   .btn-get:active { transform: scale(.98); }
-  .btn-get:disabled { opacity: .45; cursor: not-allowed; }
+  .btn-get.loading { opacity: .6; cursor: wait; pointer-events: none; }
 
   /* Key display */
   .key-display {
@@ -197,6 +201,18 @@
     gap: 6px;
   }
   .expiry-note::before { content: "⏱"; }
+
+  .info-box {
+    margin-top: 14px;
+    background: #0a1020;
+    border: 1px solid #1a3060;
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 12px;
+    color: var(--acc2);
+    display: none;
+  }
+  .info-box.show { display: block; }
 
   .error-box {
     display: none;
@@ -244,14 +260,14 @@
 
 <section class="hero">
   <h1>Universal AutoFarm<br><span>Premium Key System</span></h1>
-  <p>Génère ta clé gratuite valable <strong>24h</strong>. Liée à ton PC, non-transférable, à renouveler chaque jour.</p>
+  <p>Get your free key valid for <strong>24 hours</strong>. Bound to your PC, non-transferable — renew every day.</p>
 </section>
 
 <section class="features" id="features">
   <div class="feat">
     <span class="feat-icon">⚔</span>
     <div>
-      <div class="feat-title">AutoFarm universel</div>
+      <div class="feat-title">Universal AutoFarm</div>
       <div class="feat-desc">Orbit, TP mode, hitbox expand, auto-collect</div>
     </div>
   </div>
@@ -259,57 +275,59 @@
     <span class="feat-icon">🎯</span>
     <div>
       <div class="feat-title">Whitelist / Blacklist</div>
-      <div class="feat-desc">Cible uniquement les mobs que tu veux</div>
+      <div class="feat-desc">Target only the mobs you want</div>
     </div>
   </div>
   <div class="feat">
     <span class="feat-icon">👁</span>
     <div>
       <div class="feat-title">Remote Spy</div>
-      <div class="feat-desc">Détecte et fire les RemoteEvents</div>
+      <div class="feat-desc">Detect and fire RemoteEvents</div>
     </div>
   </div>
   <div class="feat">
     <span class="feat-icon">🗺</span>
     <div>
       <div class="feat-title">Minimap</div>
-      <div class="feat-desc">Radar temps réel des mobs et joueurs</div>
+      <div class="feat-desc">Real-time radar for mobs and players</div>
     </div>
   </div>
   <div class="feat premium">
     <span class="feat-icon">⚡</span>
     <div>
       <div class="feat-title">Fire ALL Remote</div>
-      <div class="feat-desc">ID Blaster — fire tous les remotes avec un arg custom en loop</div>
+      <div class="feat-desc">ID Blaster — fire all remotes with a custom arg in loop</div>
     </div>
   </div>
   <div class="feat">
     <span class="feat-icon">♾</span>
     <div>
       <div class="feat-title">God / NoClip / InfJump</div>
-      <div class="feat-desc">God mode, no clip, saut infini</div>
+      <div class="feat-desc">God mode, no clip, infinite jump</div>
     </div>
   </div>
 </section>
 
 <section class="key-card" id="get-key" style="margin-top:48px; margin-bottom:0;">
-  <h2>🔑 Obtenir ta clé Premium</h2>
-  <p class="sub">Gratuit — valable 24h — liée à ton HWID</p>
+  <h2>🔑 Get Your Premium Key</h2>
+  <p class="sub">Free — valid 24 hours — bound to your HWID</p>
 
   <div class="steps">
-    <div class="step"><span class="step-num">1</span>Clique sur "Générer ma clé"</div>
-    <div class="step"><span class="step-num">2</span>Copie la clé générée</div>
-    <div class="step"><span class="step-num">3</span>Lance le script et entre ta clé</div>
-    <div class="step"><span class="step-num">4</span>La clé se lie à ton PC — valable 24h</div>
+    <div class="step"><span class="step-num">1</span>Click "Get Key" and complete the quick verification</div>
+    <div class="step"><span class="step-num">2</span>You'll be redirected back here automatically</div>
+    <div class="step"><span class="step-num">3</span>Copy your generated key</div>
+    <div class="step"><span class="step-num">4</span>Launch the script and enter your key — valid 24h</div>
   </div>
 
-  <button class="btn-get" id="genBtn" onclick="generateKey()">⚡ Générer ma clé</button>
+  <a class="btn-get" id="getBtn" href="#" onclick="handleGetKey(event)">⚡ Get Key</a>
+
+  <div class="info-box" id="infoBox"></div>
 
   <div class="key-display" id="keyDisplay">
-    <div class="key-label">Ta clé Premium</div>
+    <div class="key-label">Your Premium Key</div>
     <div class="key-val" id="keyVal">—</div>
-    <button class="copy-btn" id="copyBtn" onclick="copyKey()">Copier</button>
-    <div class="expiry-note">Clé valable 24h après activation dans le script</div>
+    <button class="copy-btn" id="copyBtn" onclick="copyKey()">Copy</button>
+    <div class="expiry-note">Key valid for 24h after first use in the script</div>
   </div>
 
   <div class="error-box" id="errorBox"></div>
@@ -318,66 +336,115 @@
 <section class="faq">
   <h3>FAQ</h3>
   <div class="faq-item">
-    <div class="faq-q">Pourquoi ma clé expire ?</div>
-    <div class="faq-a">Les clés sont valables 24h à partir du moment où tu les utilises dans le script. Reviens sur ce site chaque jour pour en générer une nouvelle.</div>
+    <div class="faq-q">Why does my key expire?</div>
+    <div class="faq-a">Keys are valid for 24 hours from the moment you use them in the script. Come back to this site each day to generate a new one.</div>
   </div>
   <div class="faq-item">
-    <div class="faq-q">Puis-je partager ma clé ?</div>
-    <div class="faq-a">Non. La clé se lie à ton HWID (identifiant PC) dès la première utilisation. Si quelqu'un essaie de l'utiliser sur un autre PC, elle sera refusée.</div>
+    <div class="faq-q">Can I share my key?</div>
+    <div class="faq-a">No. The key binds to your HWID (PC identifier) on first use. If someone tries to use it on another PC, it will be rejected.</div>
   </div>
   <div class="faq-item">
-    <div class="faq-q">C'est vraiment gratuit ?</div>
-    <div class="faq-a">Oui, totalement gratuit. Tu peux générer jusqu'à 3 clés par jour par IP.</div>
+    <div class="faq-q">Is it really free?</div>
+    <div class="faq-a">Yes, completely free. You can generate one key per day per IP. Keys reset every 24 hours.</div>
   </div>
   <div class="faq-item">
-    <div class="faq-q">Quelles features sont Premium ?</div>
-    <div class="faq-a">Le Fire ALL Remote (ID Blaster) nécessite une clé valide. Toutes les autres features sont disponibles sans clé.</div>
+    <div class="faq-q">Which features require a key?</div>
+    <div class="faq-a">The Fire ALL Remote (ID Blaster) requires a valid key. All other features are available without a key.</div>
+  </div>
+  <div class="faq-item">
+    <div class="faq-q">Why do I have to go through a verification?</div>
+    <div class="faq-a">The Workink verification step prevents automated abuse and keeps the key system free for everyone. It only takes a few seconds.</div>
   </div>
 </section>
 
-<footer>AutoFarm v5 — Key System — Non affilié à Roblox Corporation</footer>
+<footer>AutoFarm v5 — Key System — Not affiliated with Roblox Corporation</footer>
 
 <script>
-const API = ""; // vide = même domaine
+  // ── CONFIG — change these two values ──────────────────────────
+  const WORKINK_URL = "https://workink.net/1A2B/your-link-here"; // <-- your Workink link
+  const API         = "";  // empty = same domain
+  // ──────────────────────────────────────────────────────────────
 
-async function generateKey() {
-  const btn = document.getElementById("genBtn");
-  const display = document.getElementById("keyDisplay");
-  const errorBox = document.getElementById("errorBox");
-  btn.disabled = true;
-  btn.textContent = "Génération...";
-  errorBox.classList.remove("show");
-  display.classList.remove("show");
+  const getBtn    = document.getElementById("getBtn");
+  const display   = document.getElementById("keyDisplay");
+  const errorBox  = document.getElementById("errorBox");
+  const infoBox   = document.getElementById("infoBox");
 
-  try {
-    const res = await fetch(API + "/api/generate", { method: "POST" });
-    const data = await res.json();
-    if (data.success) {
-      document.getElementById("keyVal").textContent = data.key;
-      display.classList.add("show");
-      btn.textContent = "⚡ Générer une nouvelle clé";
-    } else {
-      errorBox.textContent = "❌ " + data.error;
-      errorBox.classList.add("show");
-      btn.textContent = "⚡ Générer ma clé";
-    }
-  } catch (e) {
-    errorBox.textContent = "❌ Erreur serveur — réessaie dans quelques secondes.";
+  function showError(msg) {
+    errorBox.textContent = "❌ " + msg;
     errorBox.classList.add("show");
-    btn.textContent = "⚡ Générer ma clé";
+    infoBox.classList.remove("show");
   }
-  btn.disabled = false;
-}
 
-function copyKey() {
-  const val = document.getElementById("keyVal").textContent;
-  navigator.clipboard.writeText(val).then(() => {
-    const btn = document.getElementById("copyBtn");
-    btn.textContent = "✓ Copié !";
-    btn.classList.add("copied");
-    setTimeout(() => { btn.textContent = "Copier"; btn.classList.remove("copied"); }, 2000);
+  function showInfo(msg) {
+    infoBox.textContent = "ℹ️ " + msg;
+    infoBox.classList.add("show");
+    errorBox.classList.remove("show");
+  }
+
+  // On page load — check if Workink redirected us back with a token
+  window.addEventListener("DOMContentLoaded", () => {
+    const params = new URLSearchParams(window.location.search);
+    const token  = params.get("token");
+
+    if (token) {
+      // Clean the URL so refreshing doesn't replay the token
+      history.replaceState({}, "", window.location.pathname + "#get-key");
+      // Scroll to key section
+      document.getElementById("get-key").scrollIntoView({ behavior: "smooth" });
+      // Auto-generate key with the token
+      generateKey(token);
+    }
   });
-}
+
+  function handleGetKey(e) {
+    e.preventDefault();
+    // Build the return URL — Workink will append ?token=XXX to it
+    const returnUrl = encodeURIComponent(window.location.origin + window.location.pathname);
+    window.location.href = WORKINK_URL + "?r=" + returnUrl;
+  }
+
+  async function generateKey(token) {
+    getBtn.classList.add("loading");
+    getBtn.textContent = "⏳ Generating key...";
+    errorBox.classList.remove("show");
+    display.classList.remove("show");
+    infoBox.classList.remove("show");
+
+    try {
+      const res  = await fetch(API + "/api/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token })
+      });
+      const data = await res.json();
+
+      if (data.success) {
+        document.getElementById("keyVal").textContent = data.key;
+        display.classList.add("show");
+        getBtn.textContent = "✅ Key generated";
+        getBtn.classList.remove("loading");
+      } else {
+        showError(data.error);
+        getBtn.textContent = "⚡ Get Key";
+        getBtn.classList.remove("loading");
+      }
+    } catch (e) {
+      showError("Server error — please try again in a few seconds.");
+      getBtn.textContent = "⚡ Get Key";
+      getBtn.classList.remove("loading");
+    }
+  }
+
+  function copyKey() {
+    const val = document.getElementById("keyVal").textContent;
+    navigator.clipboard.writeText(val).then(() => {
+      const btn = document.getElementById("copyBtn");
+      btn.textContent = "✓ Copied!";
+      btn.classList.add("copied");
+      setTimeout(() => { btn.textContent = "Copy"; btn.classList.remove("copied"); }, 2000);
+    });
+  }
 </script>
 </body>
 </html>
