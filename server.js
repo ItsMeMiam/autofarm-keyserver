@@ -15,8 +15,7 @@ const db   = new Database("keys.db");
 const PORT = process.env.PORT || 3000;
 
 // ── Config ──────────────────────────────────
-const ADMIN_SECRET     = process.env.ADMIN_SECRET     || "change_this_admin_password";
-const WORKINK_API_KEY  = process.env.WORKINK_API_KEY  || "your_workink_api_key_here";
+const ADMIN_SECRET     = process.env.ADMIN_SECRET || "change_this_admin_password";
 const KEY_DURATION     = 24 * 60 * 60 * 1000; // 24h in ms
 const MAX_KEYS_IP      = 1;  // 1 key per IP per day
 
@@ -67,11 +66,11 @@ function todayStr() {
 // ── Workink token verification ───────────────
 async function verifyWorkinkToken(token) {
   try {
-    const url = `https://api.workink.net/v1/verify?apikey=${WORKINK_API_KEY}&token=${encodeURIComponent(token)}`;
+    const url = `https://work.ink/_api/v2/token/isValid/${encodeURIComponent(token)}`;
     const res  = await fetch(url);
     const data = await res.json();
-    // Workink returns { success: true } on valid token
-    return data.success === true;
+    // Workink returns { valid: true } on valid token
+    return data.valid === true;
   } catch (e) {
     console.error("[Workink] Verification failed:", e.message);
     return false;
